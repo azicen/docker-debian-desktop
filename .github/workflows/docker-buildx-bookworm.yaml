@@ -62,7 +62,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
           tags: |
             type=raw,value=${{ env.CODENAME }}
-            type=raw,value=${{ env.CODENAME }}-${{ github.ref_name }}
 
       - name: 检查容器元数据
         run: |
