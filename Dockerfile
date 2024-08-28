@@ -48,6 +48,7 @@ RUN apt update && \
         /tmp/*
 
 COPY /root /
+RUN chmod +x /etc/s6-overlay/s6-rc.d/*/run
 
 EXPOSE 5901 6081
 VOLUME /config
