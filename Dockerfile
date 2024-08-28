@@ -12,17 +12,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     NOVNC_PORT=6081 \
     HOME=/config
 
-
 RUN echo "LC_ALL=en_US.UTF-8" >> /etc/environment && \
     echo "LANG=en_US.UTF-8" > /etc/locale.conf && \
     echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && \
     locale-gen && \
     mkdir -p /usr/share/man/man1 && \
     chsh -s /bin/bash abc
-
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list && \
-    sed -i 's/security.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
-
 
 RUN apt update && \
     apt install -y --no-install-recommends \
@@ -51,7 +46,6 @@ RUN apt update && \
         /var/lib/apt/lists/* \
         /var/tmp/* \
         /tmp/*
-
 
 COPY /root /
 
