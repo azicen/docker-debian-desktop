@@ -2,7 +2,9 @@ FROM ghcr.io/linuxserver/baseimage-debian:bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     WINDOWMANAGER=openbox \
-    LANG=C \
+    LC_ALL=en_US.UTF-8 \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US.UTF-8 \
     DISPLAY=:0 \
     VNC_TITLE=TigerVNC \
     VNC_HOST=127.0.0.1 \
@@ -12,31 +14,23 @@ ENV DEBIAN_FRONTEND=noninteractive \
     NOVNC_PORT=6081 \
     HOME=/config
 
-RUN echo "LC_ALL=en_US.UTF-8" >> /etc/environment && \
-    echo "LANG=en_US.UTF-8" > /etc/locale.conf && \
-    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && \
-    locale-gen && \
-    mkdir -p /usr/share/man/man1 && \
-    chsh -s /bin/bash abc
-
 RUN apt update && \
     apt install -y --no-install-recommends \
+        at-spi2-core \
+        build-essential \
+        dbus \
+        grep \
         iputils-ping \
         iproute2 \
-        procps \
-        grep \
-        sudo \
-        dbus-x11 \
-        xfonts-base \
-        x11-utils \
-        x11-xserver-utils \
-        tigervnc-common \
-        tigervnc-standalone-server \
-        tigervnc-tools \
-        xterm \
         openbox \
-        novnc \
-        fonts-noto-cjk && \
+        procps \
+        sudo \
+        tigervnc-standalone-server \
+        fonts-wqy-zenhei \
+        xterm \
+        wget \
+        novnc && \
+    echo 'abc ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers && \
     apt autoremove -y && \
     apt autoclean -y && \
     apt clean && \

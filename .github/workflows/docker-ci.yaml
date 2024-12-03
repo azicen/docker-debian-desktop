@@ -10,7 +10,6 @@ on:
 env:
   REGISTRY: ${{ vars.REGISTRY }}
   IMAGE: ${{ vars.IMAGE }}
-  CODENAME: bookworm
 
 jobs:
   build-and-push:
@@ -30,7 +29,6 @@ jobs:
         run: |
           echo "REGISTRY:          ${{ env.REGISTRY }}"
           echo "IMAGE:             ${{ env.IMAGE }}"
-          echo "CODENAME:          ${{ env.CODENAME }}"
           echo "REGISTRY_USERNAME: ${{ env.REGISTRY_USERNAME }}"
 
       - name: 检出代码
@@ -46,29 +44,6 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 检查构建器
-        run: |
-          echo "Name:      ${{ steps.buildx.outputs.name }}"
-          echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
-          echo "Status:    ${{ steps.buildx.outputs.status }}"
-          echo "Flags:     ${{ steps.buildx.outputs.flags }}"
-          echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
-
-      # 根据输入自动生成 tag 和 label 等数据
-      - name: 构建容器元数据
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
-          tags: |
-            type=raw,value=${{ env.CODENAME }}
-
-      - name: 检查容器元数据
-        run: |
-          echo "docker iamge tags:    ${{ steps.meta.outputs.tags }}"
-          echo "docker iamge labels:  ${{ steps.meta.outputs.labels }}"
-          echo "docker iamge version: ${{ steps.meta.outputs.version }}"
-
       # 缓存 Docker 镜像以加速构建
       - name: 配置容器缓存层
         uses: actions/cache@v4
@@ -77,6 +52,14 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
+
+      - name: 检查构建器
+        run: |
+          echo "Name:      ${{ steps.buildx.outputs.name }}"
+          echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
+          echo "Status:    ${{ steps.buildx.outputs.status }}"
+          echo "Flags:     ${{ steps.buildx.outputs.flags }}"
+          echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
 
       # 登录到容器仓库
       # github secrets.GITHUB_TOKEN 不需要手动添加，可以直接使用
@@ -87,15 +70,39 @@ jobs:
           username: ${{ env.REGISTRY_USERNAME }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 根据输入自动生成 tag 和 label 等数据
+      - name: 构建容器元数据
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
+          tags: |
+            type=raw,value=latest
+            type=schedule,pattern=nightly
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+
+      - name: 检查容器元数据
+        run: |
+          echo "docker iamge version: ${{ steps.meta.outputs.version }}"
+          echo "\n"
+          echo "docker iamge tags:"
+          echo "${{ steps.meta.outputs.tags }}"
+          echo "\n"
+          echo "docker iamge labels:"
+          echo "${{ steps.meta.outputs.labels }}"
+
       # 构建并上传
       - name: 构建容器并推送注册表
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
-          platforms: linux/amd64
-          push: true
+          platforms: |
+            linux/arm64
+            linux/amd64
+          outputs: type=registry,push=true,compression=gzip,compression-level=9
+          provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
