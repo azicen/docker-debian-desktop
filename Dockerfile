@@ -18,7 +18,7 @@ RUN apt update && \
     apt install -y --no-install-recommends \
         at-spi2-core \
         build-essential \
-        dbus \
+        dbus-x11 \
         grep \
         iputils-ping \
         iproute2 \
